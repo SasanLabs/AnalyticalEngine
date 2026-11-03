@@ -19,9 +19,9 @@ For every benchmark listed in a sources file, the engine:
 
 1. reads the scanner's results file, written by VulnerableApp's
    `/scanner/benchmark` endpoint (the same format for every scanner);
-2. maps each detected, missed and unmatched item to its VulnerableApp
-   challenge and level: DAST by URL (`/JWTVulnerability/LEVEL_3`), SAST by
-   class name, with a mapping file for classes named differently;
+2. keys each detected, missed and unmatched item by its CWE, normalized to
+   `CWE-<number>`. DAST items also get the challenge and level of their URL
+   (`/JWTVulnerability/LEVEL_3`);
 3. computes the metrics (expected, detected, missed, unmatched, coverage);
 4. writes the dataset.
 
@@ -35,9 +35,14 @@ Two CSV files, described column by column in
   coverage. Running again on the same date replaces that date's row, and a new
   date adds rows, so the file is the history.
 - **`findings.csv`**: every item of each benchmark's latest result, with its
-  status (`detected`, `missed` or `unmatched`), challenge, level, CWE and
-  location. It is rewritten on every run. A benchmark whose results file is
-  missing keeps its previous rows.
+  status (`detected`, `missed` or `unmatched`), CWE, type, challenge and
+  level (DAST only) and location. It is rewritten on every run. A benchmark
+  whose results file is missing keeps its previous rows.
+
+CWE is the key for comparisons: how much of a CWE a scanner covers is
+detected / (detected + missed) over that CWE's rows, which any query or
+visualization layer can compute. Only benchmarks of the same `scanner_type`
+are compared, since DAST and SAST ground truths describe different things.
 
 `detected` rows need results that list `detectedItems`
 ([SasanLabs/VulnerableApp#832](https://github.com/SasanLabs/VulnerableApp/pull/832)).
@@ -57,7 +62,6 @@ Requires Java 17. From this repository, against a VulnerableApp checkout:
 | `--out` | (required) | Directory the dataset is written to. |
 | `--base-dir` | current directory | Directory the results paths in the sources file are relative to. |
 | `--sources` | `config/vulnerableapp/benchmark-sources.json` | The benchmarks to read. |
-| `--mapping` | `config/vulnerableapp/challenge-mapping.json` | Challenge names for SAST classes named differently. |
 | `--run-date` | today (UTC) | Date recorded for this run, `YYYY-MM-DD`. |
 
 ## Adding a scanner
@@ -70,7 +74,7 @@ Once VulnerableApp commits a results file for the scanner, add it to
   "id": "nuclei",
   "scanner": "Nuclei",
   "variant": "default templates",
-  "scanType": "DAST",
+  "scannerType": "DAST",
   "results": "benchmarks/Nuclei/nuclei-results.json"
 }
 ```

@@ -1,9 +1,9 @@
 package org.sasanlabs.analytics.mapping;
 
-import java.util.Map;
 import org.sasanlabs.analytics.model.Finding;
+import org.sasanlabs.analytics.model.ScannerType;
 
-/** Resolves a benchmark finding to the VulnerableApp challenge it belongs to. */
+/** Resolves a benchmark finding to the VulnerableApp challenge it belongs to, where it has one. */
 public interface ChallengeMapper {
 
     ChallengeRef map(Finding finding);
@@ -11,7 +11,9 @@ public interface ChallengeMapper {
     /** Text identifying where the finding is: a URL path for DAST, {@code path:line} for SAST. */
     String location(Finding finding);
 
-    static ChallengeMapper forScanType(boolean sast, Map<String, String> sastClassToChallenge) {
-        return sast ? new SastChallengeMapper(sastClassToChallenge) : new DastChallengeMapper();
+    static ChallengeMapper forScannerType(ScannerType scannerType) {
+        return scannerType == ScannerType.SAST
+                ? new SastChallengeMapper()
+                : new DastChallengeMapper();
     }
 }

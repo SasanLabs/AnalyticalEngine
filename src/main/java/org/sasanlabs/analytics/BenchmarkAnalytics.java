@@ -37,7 +37,7 @@ public final class BenchmarkAnalytics {
                 source.id(),
                 source.scanner(),
                 source.variant(),
-                source.scanType().toUpperCase(Locale.ROOT),
+                source.scannerType(),
                 nullToEmpty(result.scannerVersion()),
                 result.totalExpected(),
                 result.detected(),
@@ -47,16 +47,12 @@ public final class BenchmarkAnalytics {
     }
 
     /**
-     * Detected, missed and unmatched rows of one result, each mapped to its challenge.
-     *
-     * @param sastClassToChallenge challenge names for SAST classes named differently
+     * Detected, missed and unmatched rows of one result, keyed by CWE. DAST rows also carry the
+     * challenge and level of their URL.
      */
     public static List<FindingRow> toFindings(
-            BenchmarkSource source,
-            BenchmarkResult result,
-            String runDate,
-            Map<String, String> sastClassToChallenge) {
-        ChallengeMapper mapper = ChallengeMapper.forScanType(source.isSast(), sastClassToChallenge);
+            BenchmarkSource source, BenchmarkResult result, String runDate) {
+        ChallengeMapper mapper = ChallengeMapper.forScannerType(source.scannerType());
         List<FindingRow> rows = new ArrayList<>();
         addFindings(rows, source, runDate, mapper, Status.DETECTED, result.detectedItems());
         addFindings(rows, source, runDate, mapper, Status.MISSED, result.missedItems());
@@ -117,12 +113,12 @@ public final class BenchmarkAnalytics {
                             source.id(),
                             source.scanner(),
                             source.variant(),
-                            source.scanType().toUpperCase(Locale.ROOT),
+                            source.scannerType(),
                             status,
+                            normalizeCwe(finding.cwe()),
+                            nullToEmpty(finding.type()),
                             ref.challenge(),
                             ref.level(),
-                            nullToEmpty(finding.type()),
-                            nullToEmpty(finding.cwe()),
                             mapper.location(finding)));
         }
     }
@@ -130,11 +126,32 @@ public final class BenchmarkAnalytics {
     /** Stable order, so a re-run with the same results produces an identical file. */
     private static final Comparator<FindingRow> FINDING_ORDER =
             Comparator.comparing(FindingRow::status)
+                    .thenComparingLong(row -> cweNumber(row.cwe()))
+                    .thenComparing(FindingRow::cwe)
                     .thenComparing(FindingRow::challenge)
                     .thenComparingInt(row -> levelNumber(row.level()))
                     .thenComparing(FindingRow::location)
-                    .thenComparing(FindingRow::vulnerabilityType)
-                    .thenComparing(FindingRow::cwe);
+                    .thenComparing(FindingRow::vulnerabilityType);
+
+    /**
+     * CWE ids in one form, {@code CWE-89}, whatever form the scanner reported ({@code 89}, {@code
+     * cwe-089}), so they group together. Empty when the item has none.
+     */
+    static String normalizeCwe(String raw) {
+        long number = cweNumber(raw);
+        return number < 0 ? "" : "CWE-" + number;
+    }
+
+    private static long cweNumber(String raw) {
+        if (raw == null) {
+            return -1;
+        }
+        String digits = raw.replaceAll("\\D", "");
+        if (digits.isEmpty() || digits.length() > 18) {
+            return -1;
+        }
+        return Long.parseLong(digits);
+    }
 
     private static int levelNumber(String level) {
         Matcher m = LEVEL_NUMBER.matcher(level);

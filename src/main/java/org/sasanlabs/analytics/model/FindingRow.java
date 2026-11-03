@@ -9,12 +9,12 @@ public record FindingRow(
         String benchmark,
         String scanner,
         String variant,
-        String scanType,
+        ScannerType scannerType,
         Status status,
+        String cwe,
+        String vulnerabilityType,
         String challenge,
         String level,
-        String vulnerabilityType,
-        String cwe,
         String location) {
 
     /** Whether an expected item was found or missed, or a reported item matched nothing. */
@@ -38,12 +38,12 @@ public record FindingRow(
                     "benchmark",
                     "scanner",
                     "variant",
-                    "scan_type",
+                    "scanner_type",
                     "status",
+                    "cwe",
+                    "vulnerability_type",
                     "challenge",
                     "level",
-                    "vulnerability_type",
-                    "cwe",
                     "location");
 
     public static FindingRow fromCells(List<String> c) {
@@ -52,7 +52,7 @@ public record FindingRow(
                 c.get(1),
                 c.get(2),
                 c.get(3),
-                c.get(4),
+                ScannerType.fromString(c.get(4)),
                 Status.fromLabel(c.get(5)),
                 c.get(6),
                 c.get(7),
@@ -67,12 +67,12 @@ public record FindingRow(
                 benchmark,
                 scanner,
                 variant,
-                scanType,
+                scannerType.name(),
                 status.label(),
+                cwe,
+                vulnerabilityType,
                 challenge,
                 level,
-                vulnerabilityType,
-                cwe,
                 location);
     }
 }

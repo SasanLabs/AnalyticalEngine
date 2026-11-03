@@ -41,14 +41,15 @@
             "description": "What distinguishes this benchmark from others of the same scanner, e.g. Modern UI or a ruleset."
           },
           {
-            "name": "scan_type",
+            "name": "scanner_type",
             "type": "string",
             "constraints": {
               "enum": [
                 "DAST",
                 "SAST"
               ]
-            }
+            },
+            "description": "DAST or SAST. Only benchmarks of the same type are comparable."
           },
           {
             "name": "scanner_version",
@@ -91,7 +92,7 @@
       "name": "findings",
       "path": "findings.csv",
       "profile": "tabular-data-resource",
-      "description": "Every item of each benchmark's latest result, mapped to a VulnerableApp challenge. Rewritten on each run.",
+      "description": "Every item of each benchmark's latest result, keyed by CWE. Rewritten on each run.",
       "format": "csv",
       "mediatype": "text/csv",
       "encoding": "utf-8",
@@ -114,14 +115,15 @@
             "type": "string"
           },
           {
-            "name": "scan_type",
+            "name": "scanner_type",
             "type": "string",
             "constraints": {
               "enum": [
                 "DAST",
                 "SAST"
               ]
-            }
+            },
+            "description": "DAST or SAST. Only benchmarks of the same type are comparable."
           },
           {
             "name": "status",
@@ -136,14 +138,9 @@
             "description": "detected and missed rows are expected vulnerabilities; unmatched rows are reported items that match none."
           },
           {
-            "name": "challenge",
+            "name": "cwe",
             "type": "string",
-            "description": "VulnerableApp challenge, e.g. JWTVulnerability. Empty when the item is not on a challenge."
-          },
-          {
-            "name": "level",
-            "type": "string",
-            "description": "Challenge level, e.g. LEVEL_3. DAST only."
+            "description": "CWE id, normalized to CWE-<number>, e.g. CWE-89. The primary key for comparing scanners: coverage of a CWE is detected / (detected + missed) over its rows. Empty when the item has none."
           },
           {
             "name": "vulnerability_type",
@@ -151,9 +148,14 @@
             "description": "Type as named by the ground truth or the scanner."
           },
           {
-            "name": "cwe",
+            "name": "challenge",
             "type": "string",
-            "description": "CWE id, e.g. CWE-89. The common key across scanners."
+            "description": "VulnerableApp challenge, from the URL, e.g. JWTVulnerability. DAST only; empty when the URL is not on a challenge."
+          },
+          {
+            "name": "level",
+            "type": "string",
+            "description": "Challenge level, e.g. LEVEL_3. DAST only."
           },
           {
             "name": "location",
